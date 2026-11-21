@@ -55,10 +55,10 @@ liquor_fit |> select(ets) |> report()
 
 # Answer 2.2a:
 # ARIMA chosen: ARIMA(2,0,3)(2,1,1)[12] w/ drift. No regular difference
-# (d = 0) and one seasonal difference (D = 1): the model uses the change
+# (d = 0) and one seasonal difference d=1: the model uses the change
 # from the same month last year.
-# ETS chosen: ETS(A,A,A). Additive errors, an additive trend, and
-# additive seasonality (additive on the log scale).
+# ETS(A,A,A). Additive errors, an additive trend, and
+# additive seasonality on log scale.
 
 # 2.2b
 liquor_fit |> select(arima) |> gg_tsresiduals()
@@ -78,7 +78,7 @@ liquor_fit |>
 
 # Answer 2.2b:
 # dof = 8. Ljung-Box statistic = 95.2, p-value < 0.001, so the
-# residuals do not look like white noise; some structure is left.
+# residuals do not look like white noise, so some structure is left.
 
 # ---- 2.3a ----
 liquor_cv <- liquor |>
@@ -155,10 +155,10 @@ err_cor <- cor(liquor_errs$arima, liquor_errs$ets)
 err_cor
 
 # Answer 3b:
-# The correlation is 0.80, so the two models make similar errors and
-# averaging cancels little. The DM test also showed ARIMA is
+# The correlation is 0.80 so the two models do make similar errors and
+# averaging cancels a little. The DM test also showed ARIMA is
 # significantly better than ETS, so adding ETS mostly pulls the forecast
-# toward a worse model. That is why the combo did not beat ARIMA.
+# toward a worse model. Thats why the combo didn't beat ARIMA.
 
 
 
@@ -221,10 +221,10 @@ rmse_by_var(fc_var4)
 #   unrate 0.199, ffr 0.390, gs10 0.361
 # VAR(4) RMSE: gdp 0.569, cons 0.527, inv 2.521, emp 0.228, infl 0.207,
 #   unrate 0.215, ffr 0.497, gs10 0.379
-# The VAR(1) forecasts better, for 7 of the 8 variables (all except
-# inflation, where the two are nearly tied).
+# The VAR(1) forecasts better for 7 out of 8 vars (all except
+# inflation, where the  almos tie)
 # The VAR(4) estimates many more coefficients from limited data. The
-# extra estimation noise (overfitting) can outweigh what the extra lags add.
+# extra estimation noise can outweigh what the extra lags add.
 
 # 4.3a
 bvar_cv <- function(lambda) {
@@ -264,11 +264,11 @@ var_results |> knitr::kable(digits = 3)
 
 # Answer 4.3b:
 # - BVAR(4) with lambda = 0.3 has a lower RMSE than the OLS VAR(4) for
-#   ___ of 8 variables. The only difference is the prior: shrinking
+#   all 8 variables. The only difference is the prior: shrinking
 #   coefficients toward zero cuts estimation noise.
-# - Compared with the VAR(1), the BVAR(4) is better for ___ of 8 variables.
-# - With lambda = 0.05, RMSE [falls / rises] for most variables, so
-#   [even more / less] shrinkage helps.
+# - Compared with the VAR(1), the BVAR(4) is better for 3 of 8 variables, inv, infl, gs10.
+# - With lambda = 0.05, RMSE rises for 7 of 8, so
+#  its too much shrinkage
 # - No. The winner's RMSE is too optimistic: the model was chosen
 #   because it did best on this same sample, partly by luck.
 
@@ -286,11 +286,10 @@ dm_infl
 saveRDS(list(gdp = dm_gdp, infl = dm_infl), "results/dm_var.rds")
 
 # Answer 4.3c:
-# GDP: DM = ___, p = ___. Inflation: DM = ___, p = ___.
-# [If p > 0.05] The differences are not statistically significant, so
-# the RMSE rankings in 4.3b should be read with caution.
-# [If p < 0.05] The BVAR is significantly more accurate, so the gains in
-# 4.3b are likely real.
+# GDP: DM = 2.14, p = 0.035. The BVAR is significantly more accurate.
+#Inflation: DM = 1.45, p = 0.149. The difference is not significant.
+# So some of the RMSE differences in 4.3b are probably just noise.
+
 
 # Part 5
 
@@ -354,7 +353,7 @@ sort(abs(cor(pc$x[, 2], Z))[1, ], decreasing = TRUE)[1:8]
 # Answer 5.2c:
 # Factor 1 is most correlated with employment and industrial production
 # (PAYEMS, IPMANSICS, USGOOD, INDPRO, MANEMP) and drops in recessions, so
-# it is a real-activity factor.
+# it is a real activity factor.
 # Factor 2 is most correlated with consumer price series (CPI and PCE
 # price indexes), so it is a price/inflation factor.
 
@@ -376,9 +375,9 @@ c(RMSE_AR = sqrt(mean(e_ar^2)), RMSE_FA = sqrt(mean(e_fa^2)))
 
 # Answer 5.3:
 # RMSE_AR = 0.617 and RMSE_FA = 0.589, matching the results from class.
-# Full-sample factors use future data that a forecaster would not have
-# at the forecast origin, which makes the forecasts look better than
-# they really are.
+# the full sample factors use future data that a forecaster wouldnt normally have
+# at the forecast, which makes the forecasts look better than
+# they really are, sore youre forcasting information you already have.
 
 # 5.4
 direct_race <- function(series, h = 12, r = 3) {
@@ -411,6 +410,6 @@ cpi_race |> mutate(pct_reduction = 100 * (1 - RMSE_FA / RMSE_AR))
 
 # Answer 5.4:
 # Yes. RMSE falls from 2.108 to 1.894, a 10.2% reduction (MAE: 1.578 to
-# 1.349). DM p-value = 0.0004, so the difference is statistically
+# 1.349). DM p-value = 0.0004, so  difference is statistically
 # significant.
 
