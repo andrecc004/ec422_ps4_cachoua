@@ -1,4 +1,4 @@
-EC 422 - Problem Set 4
+# EC 422 - Problem Set 4
 # Parts 2-5
 # NOTE: "___" marks a number to fill in from your output.
 
@@ -50,7 +50,6 @@ liquor_fit <- liquor |>
 
 liquor_fit |> select(arima) |> report()
 liquor_fit |> select(ets) |> report()
-
 
 # Answer 2.2a:
 # ARIMA chosen: ARIMA(___)(___)[12]. d = ___ regular difference(s) and
@@ -130,4 +129,3 @@ saveRDS(list(arima_ets = dm_arima_ets, arima_snaive = dm_arima_snaive),
 # A p-value below 0.05 means the two models' accuracy is significantly
 # different. I would use ___, since it has the lowest RMSE and
 # [is / is not] significantly better than the alternatives.
-
