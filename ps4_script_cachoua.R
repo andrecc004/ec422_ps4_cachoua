@@ -39,9 +39,13 @@ liquor |>
        x = "Month", y = "log(sales)")
 
 # Answer 2.1b:
-# Sales trend steadily upward. December is the highest month by far;
-# January and February are the lowest. The seasonal swings grow as the
-# level rises, so taking logs makes them roughly constant in size.
+# Sales trend steadily upward, from about $1.4 billion in 1992 to over
+# $6 billion by 2019. December is the highest month by far (about 39%
+# above an average month); January and February are the lowest (about
+# 17% below). Summer months are somewhat above average. The seasonal
+# swings grow with the level (the December-January gap went from about
+# $940M in 1992 to $2,370M in 2019), so logs make the swings roughly
+# constant and the seasonality additive.
 
 # ---- 2.2a ----
 liquor_fit <- liquor |>
@@ -52,10 +56,11 @@ liquor_fit |> select(arima) |> report()
 liquor_fit |> select(ets) |> report()
 
 # Answer 2.2a:
-# ARIMA chosen: ARIMA(___)(___)[12]. d = ___ regular difference(s) and
-# D = ___ seasonal difference(s) were taken.
-# ETS chosen: ETS(___,___,___). The letters give the error type,
-# trend type, and seasonal type (A = additive, N = none, Ad = damped).
+# ARIMA chosen: ARIMA(2,0,3)(2,1,1)[12] w/ drift. No regular difference
+# (d = 0) and one seasonal difference (D = 1): the model uses the change
+# from the same month last year.
+# ETS chosen: ETS(A,A,A). Additive errors, an additive trend, and
+# additive seasonality (additive on the log scale).
 
 # ---- 2.2b ----
 liquor_fit |> select(arima) |> gg_tsresiduals()
@@ -74,8 +79,8 @@ liquor_fit |>
   features(.innov, ljung_box, lag = 24, dof = arima_dof)
 
 # Answer 2.2b:
-# Ljung-Box p-value = ___. If p > 0.05, the residuals look like white
-# noise; if p < 0.05, some structure is left in the residuals.
+# dof = 8. Ljung-Box statistic = 95.2, p-value < 0.001, so the
+# residuals do not look like white noise; some structure is left.
 
 # ---- 2.3a ----
 liquor_cv <- liquor |>
@@ -103,7 +108,9 @@ liquor_acc |> knitr::kable(digits = 2)
 
 # Answer 2.3b:
 # First forecast: January 2002. Last forecast: December 2019.
-# Most accurate model: ___. The two metrics ___ (agree / disagree).
+# RMSE / MAE: ARIMA 75.82 / 60.27, ETS 90.75 / 73.26,
+#              SNAIVE 161.26 / 136.63
+# ARIMA forecasts most accurately. Both metrics agree.
 
 # ---- 2.4 ----
 liquor_errs <- liquor_cv_fc |>
@@ -124,8 +131,35 @@ saveRDS(list(arima_ets = dm_arima_ets, arima_snaive = dm_arima_snaive),
         "results/dm_liquor.rds")
 
 # Answer 2.4:
-# ARIMA vs ETS: DM = ___, p = ___.
-# ARIMA vs SNAIVE: DM = ___, p = ___.
-# A p-value below 0.05 means the two models' accuracy is significantly
-# different. I would use ___, since it has the lowest RMSE and
-# [is / is not] significantly better than the alternatives.
+# ARIMA vs ETS: DM = -4.28, p < 0.001.
+# ARIMA vs SNAIVE: DM = -10.99, p < 0.001.
+# ARIMA is significantly more accurate than both ETS and the seasonal
+# random walk. I would use ARIMA.
+
+# =====================================================================
+# Part 3 - Forecast Combination
+# =====================================================================
+
+# ---- 3a ----
+liquor_combo_fc <- liquor_cv_fit |>
+  mutate(combo = (arima + ets) / 2) |>
+  forecast(h = 1)
+
+combo_acc <- liquor_combo_fc |>
+  accuracy(liquor, measures = list(RMSE = RMSE, MAE = MAE))
+saveRDS(combo_acc, "results/combo_acc.rds")
+combo_acc |> knitr::kable(digits = 2)
+
+# Answer 3a:
+# Combo RMSE = 79.01, MAE = 63.18. It beats ETS (90.75) but not
+# ARIMA (75.82).
+
+# ---- 3b ----
+err_cor <- cor(liquor_errs$arima, liquor_errs$ets)
+err_cor
+
+# Answer 3b:
+# The correlation is 0.80, so the two models make similar errors and
+# averaging cancels little. The DM test also showed ARIMA is
+# significantly better than ETS, so adding ETS mostly pulls the forecast
+# toward a worse model. That is why the combo did not beat ARIMA.
